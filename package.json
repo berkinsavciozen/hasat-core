@@ -1,0 +1,15 @@
+{
+  "name": "hasat-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Hasat paylasilan TypeScript cekirdegi. Build step yok, publish yok — iki repoya git subtree ile iner.",
+  "scripts": {
+    "manifest": "node scripts/gen-manifest.mjs",
+    "drift": "node scripts/check-drift.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

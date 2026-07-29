@@ -1,0 +1,32 @@
+name: drift check (web)
+
+# Web reposuna inmiş core kopyasının hâlâ manifest ile birebir aynı olduğunu
+# doğrular. Yakalamak istediği senaryo: Lovable'ın (veya bir başkasının)
+# src/lib/core/ altındaki bir dosyaya yazması — P24'te bir kez oldu.
+#
+# Şimdilik TEK HEDEFLİ — hasat-mobile hedefi M5'te eklenecek.
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["core/**", "scripts/**"]
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Web reposunu çek
+        uses: actions/checkout@v4
+        with:
+          repository: berkinsavciozen/hasat-d2c-marketplace
+          token: ${{ secrets.SYNC_TOKEN }}
+          path: target
+          ref: main
+
+      - name: Sapma kontrolü
+        run: node scripts/check-drift.mjs target/src/lib/core
