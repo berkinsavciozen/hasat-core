@@ -17,6 +17,10 @@ env:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    # core-dist dalini bu repoya geri itiyoruz — varsayilan GITHUB_TOKEN
+    # salt-okunur oldugu icin acikca yazma izni gerekiyor.
+    permissions:
+      contents: write
     steps:
       - name: hasat-core'u çek
         uses: actions/checkout@v4
