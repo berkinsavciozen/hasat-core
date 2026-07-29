@@ -23,7 +23,7 @@ jobs:
       contents: write
     steps:
       - name: hasat-core'u çek
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -39,7 +39,7 @@ jobs:
           git push --force origin core-dist
 
       - name: Web reposunu çek
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ env.TARGET_REPO }}
           token: ${{ secrets.SYNC_TOKEN }}
