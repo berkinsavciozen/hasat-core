@@ -139,4 +139,4 @@ git subtree pull --prefix=src/lib/core <hasat-core-url> core-dist --squash
 ```
 
 `core-dist`, `core/` klasörünün `git subtree split` ile üretilmiş dal
-karşılığıdır (repo kökü = `core/` içeriği). Action bu dalı kendisi günceller.
+karşılığıdır (repo kökü = `core/` içeriği). Action bu dalı kendisi günceller...
