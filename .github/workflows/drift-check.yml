@@ -18,10 +18,10 @@ jobs:
   drift:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Web reposunu çek
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: berkinsavciozen/hasat-d2c-marketplace
           token: ${{ secrets.SYNC_TOKEN }}
@@ -30,3 +30,6 @@ jobs:
 
       - name: Sapma kontrolü
         run: node scripts/check-drift.mjs target/src/lib/core
+
+      - name: Yasaklı import taraması (kural #105/#106 — Supabase types.ts)
+        run: node scripts/check-forbidden-imports.mjs target
