@@ -1,7 +1,7 @@
 # hasat-core
 
 Hasat'ın **paylaşılan TypeScript çekirdeği**. Web (`hasat-d2c-marketplace`) ve
-mobil (`hasat-mobile`, M5'te açılacak) uygulamalarının ikisinin de ihtiyaç
+mobil (`hasat-mobile`, **M5-a'da açıldı**) uygulamalarının ikisinin de ihtiyaç
 duyduğu, **React'e ve platforma bağımsız** kod burada yaşar.
 
 > Onaylanan mimari: `hasat-vault/Build/Shared-Architecture.md`
@@ -31,7 +31,7 @@ kaynağı** olarak o riski kapatır.
 hasat-core/core/
    │
    ├── git subtree ──►  hasat-d2c-marketplace : src/lib/core/
-   └── git subtree ──►  hasat-mobile          : src/lib/core/   (M5'te açılacak)
+   └── git subtree ──►  hasat-mobile          : src/lib/core/   ✅ M5-a'da bağlandı
 ```
 
 - **`git subtree`, submodule değil.** Lovable'ın build'i submodule init etmez;
@@ -60,26 +60,28 @@ hasat-core/core/
 
 ---
 
-## İçerik (M1 — bilinçli olarak küçük)
+## İçerik
 
 | Dosya | Ne |
 |---|---|
 | `core/db/types.ts` | `supabase gen types typescript` çıktısı (proje `efuqpiaavrzimvstpdpm`) |
 | `core/design/tokens.ts` | Marka renkleri, semantik renkler, radius ölçeği, tipografi, spacing |
 | `core/units.ts` | `convertQuantity()` — g↔kg dönüşümü (P21-A) |
+| `core/supabase/client.ts` | **M5-a'da eklendi.** `createHasatSupabaseClient()` — storage adaptörü parametre alan paylaşılan Supabase client factory'si (web: `localStorage`, mobil: `expo-secure-store` tabanlı adapter) |
 | `core/index.ts` | Barrel (DB tipleri hariç — 2.700 satırlık tip grafiği her import'a girmesin) |
 
-### Bu turda BİLİNÇLİ olarak taşınmayanlar → M5
+### M5-a'da taşınanlar
 
-Plan kararı (`Build/Shared-Architecture.md`, 2026-07-28 revizyonu):
+- ✅ **Supabase client factory + storage adapter parametresi** — web'in davranışı
+  değişmeden (bkz. `hasat-d2c-marketplace` PR: `refactor(supabase): client
+  kurulumunu paylaşılan hasat-core factory'sine taşı`).
 
-- **Supabase storage adapter** (web `localStorage` ↔ mobil `expo-secure-store`)
-- **TanStack Query hook'ları** (`useListings()`, `useRecipes()` …)
+### Hâlâ M5-b/M6'ya bırakılanlar
+
+- **TanStack Query hook'ları** (`useListings()`, `useRecipes()` …) — mobil
+  tarafında `@tanstack/react-query` kuruldu (M5-a), ama ortak hook'lar henüz
+  core'a taşınmadı.
 - **Sorgu fonksiyonları** (`fetchListings()`, `fetchRecipe()` …)
-
-Gerekçe: bunlar auth ve veri akışına dokunuyor. Lansmandan (25 Ağustos) dört
-hafta önce, henüz var olmayan bir client için o hatta dokunmak istemiyoruz.
-Mobil iskelet M5'te doğduğunda, gerçek bir tüketicisi olduğu için taşınacaklar.
 
 Ayrıca taşınmadı (aday, ilk turu küçük tutmak için ertelendi):
 
@@ -96,31 +98,44 @@ Ayrıca taşınmadı (aday, ilk turu küçük tutmak için ertelendi):
 ## Komutlar
 
 ```bash
-npm run manifest    # core/.manifest üret
-npm run drift       # kendi core/ klasörünü manifest'e karşı doğrula
-npm run drift -- ../hasat-d2c-marketplace/src/lib/core   # inmiş kopyayı doğrula
-npm run typecheck   # tsc --noEmit (bağımsız tip kontrolü)
+npm run manifest             # core/.manifest üret
+npm run drift                # kendi core/ klasörünü manifest'e karşı doğrula
+npm run drift -- ../hasat-d2c-marketplace/src/lib/core   # inmiş kopyayı doğrula (elle düzenleme)
+npm run drift:freshness -- ../hasat-d2c-marketplace/src/lib/core   # sürüm-gerisi mi? (M5-a)
+npm run typecheck            # tsc --noEmit (bağımsız tip kontrolü)
 ```
 
 `npm run drift` üç durumu yakalar: **DEĞİŞTİRİLMİŞ**, **EKSİK**, **FAZLA**.
-Fark varsa exit code 1 döner.
+`npm run drift:freshness` hedefin manifest'inin `core/.manifest` ile birebir
+aynı olup olmadığını karşılaştırır (**SÜRÜM GERİSİ**). İkisi de fark varsa
+exit code 1 döner.
 
 ---
 
 ## GitHub Action
 
 `.github/workflows/sync-to-web.yml` — `main`'e `core/**` altında bir değişiklik
-girdiğinde web reposuna otomatik PR açar. **Şimdilik tek hedefli** (sadece web);
-`hasat-mobile` hedefi M5'te eklenecek.
+girdiğinde **iki hedefe birden** (matrix: `hasat-d2c-marketplace` +
+`hasat-mobile`) paralel PR açar. **M5-a'da ikinci hedef eklendi.**
 
-`.github/workflows/drift-check.yml` — web reposundaki inmiş kopyayı manifest'e
-karşı günlük doğrular (Lovable'ın core dosyalarından birine yazması senaryosu).
+`.github/workflows/drift-check.yml` — her iki hedefteki inmiş kopyayı da
+doğrular, iki adımda:
+1. **Sapma kontrolü** (`check-drift.mjs`) — hedefin kendi manifest'ine karşı;
+   Lovable'ın (veya bir başkasının) core dosyalarından birine elle yazması
+   senaryosunu yakalar.
+2. **Sürüm-gerisi kontrolü** (`check-manifest-freshness.mjs`, **M5-a'da
+   eklendi**) — hedefin manifest'i `hasat-core`'un GÜNCEL `core/.manifest`'i
+   ile birebir aynı mı? Bekleyen bir sync PR'ı merge edilmeden kalırsa,
+   hedef kendi içinde tutarlı ama bayat bir sürümde donar ve eski
+   sapma kontrolü tek başına bunu yakalayamazdı — bkz.
+   `hasat-vault/Build/Shared-Architecture.md` → "Drift kontrolünün kör
+   noktası".
 
 ### Gereken secret
 
 | Secret | Ne için |
 |---|---|
-| `SYNC_TOKEN` | Web reposuna branch push'u + PR açma yetkisi olan bir PAT (`repo` kapsamı). Berkin'in eklemesi gerekiyor — yoksa iki workflow da çalışmaz. |
+| `SYNC_TOKEN` | Her iki hedef reposuna da branch push'u + PR açma yetkisi olan bir PAT (`repo` kapsamı). **Kapsamına `hasat-mobile` M5-a'da Berkin tarafından eklendi** (bkz. `hasat-vault/TODO.md` build log) — iki workflow da artık her iki hedefte de çalışabilir durumda. |
 
 ---
 
