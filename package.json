@@ -7,9 +7,11 @@
   "scripts": {
     "manifest": "node scripts/gen-manifest.mjs",
     "drift": "node scripts/check-drift.mjs",
+    "drift:freshness": "node scripts/check-manifest-freshness.mjs",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@supabase/supabase-js": "^2.107.0",
     "typescript": "^5.8.3"
   }
 }
