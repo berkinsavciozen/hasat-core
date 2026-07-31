@@ -13,6 +13,14 @@ name: drift check (targets)
 # core/.manifest'inden geride kalmış olabilir (bekleyen bir sync PR'ı merge
 # edilmediyse). check-drift.mjs bunu yakalamaz, çünkü sadece hedefin kendi
 # manifest'ine karşı doğrular — bu yüzden ayrı bir adım gerekiyor.
+#
+# .env İÇERİK BEKÇİSİ (M5-a-ek'te eklendi, yalnızca hasat-mobile hedefinde):
+# hasat-mobile/.env public repoda takip ediliyor (bilinçli — silinirse/
+# gitignore'lanırsa her klonda uygulama açılamaz). İçindeki iki değer
+# (Supabase URL + anon publishable key) tasarım gereği public. Bekçi dosyanın
+# VARLIĞINI değil İÇERİĞİNİ denetler: her satır EXPO_PUBLIC_ ile başlamalı,
+# ayrıca service_role/SECRET/PRIVATE/TOKEN/PASSWORD kalıpları geçen bir isim
+# (prefix'i EXPO_PUBLIC_ olsa bile — örn. EXPO_PUBLIC_SERVICE_KEY) reddedilir.
 
 on:
   schedule:
@@ -50,3 +58,7 @@ jobs:
 
       - name: Yasaklı import taraması (kural #105/#106 — Supabase types.ts)
         run: node scripts/check-forbidden-imports.mjs target
+
+      - name: .env içerik bekçisi (yalnızca hasat-mobile)
+        if: matrix.target_repo == 'berkinsavciozen/hasat-mobile'
+        run: node scripts/check-env-guard.mjs target
