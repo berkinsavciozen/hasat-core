@@ -1,10 +1,18 @@
-name: drift check (web)
+name: drift check (targets)
 
-# Web reposuna inmiş core kopyasının hâlâ manifest ile birebir aynı olduğunu
-# doğrular. Yakalamak istediği senaryo: Lovable'ın (veya bir başkasının)
-# src/lib/core/ altındaki bir dosyaya yazması — P24'te bir kez oldu.
+# Hedef repolara inmiş core kopyalarının hâlâ manifest ile birebir aynı
+# olduğunu doğrular. Yakalamak istediği senaryo: Lovable'ın (veya bir
+# başkasının) src/lib/core/ altındaki bir dosyaya yazması — P24'te bir kez
+# oldu.
 #
-# Şimdilik TEK HEDEFLİ — hasat-mobile hedefi M5'te eklenecek.
+# İKİ HEDEFLİ (M5'te eklendi): hasat-d2c-marketplace (web) + hasat-mobile.
+#
+# Ayrıca sürüm-gerisi kontrolü (M5'te eklendi — bkz.
+# hasat-vault/Build/Shared-Architecture.md → "Drift kontrolünün kör noktası"):
+# hedefin manifest'i kendi içinde tutarlı olsa bile hasat-core'un GÜNCEL
+# core/.manifest'inden geride kalmış olabilir (bekleyen bir sync PR'ı merge
+# edilmediyse). check-drift.mjs bunu yakalamaz, çünkü sadece hedefin kendi
+# manifest'ine karşı doğrular — bu yüzden ayrı bir adım gerekiyor.
 
 on:
   schedule:
@@ -17,19 +25,28 @@ on:
 jobs:
   drift:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target_repo: berkinsavciozen/hasat-d2c-marketplace
+          - target_repo: berkinsavciozen/hasat-mobile
     steps:
       - uses: actions/checkout@v5
 
-      - name: Web reposunu çek
+      - name: Hedef repoyu çek
         uses: actions/checkout@v5
         with:
-          repository: berkinsavciozen/hasat-d2c-marketplace
+          repository: ${{ matrix.target_repo }}
           token: ${{ secrets.SYNC_TOKEN }}
           path: target
           ref: main
 
-      - name: Sapma kontrolü
+      - name: Sapma kontrolü (elle düzenleme var mı)
         run: node scripts/check-drift.mjs target/src/lib/core
+
+      - name: Sürüm-gerisi kontrolü (bekleyen sync PR'ı var mı)
+        run: node scripts/check-manifest-freshness.mjs target/src/lib/core
 
       - name: Yasaklı import taraması (kural #105/#106 — Supabase types.ts)
         run: node scripts/check-forbidden-imports.mjs target
