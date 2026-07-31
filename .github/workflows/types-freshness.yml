@@ -1,0 +1,41 @@
+name: types freshness (DB ↔ core)
+
+# Kural #111 (hasat-vault/TODO.md): drift-check.yml core↔hedef (hasat-core ↔
+# web/mobil) tutarlılığını denetler, DB↔core tutarlılığını DENETLEMEZ.
+# M4-c'de `recipes.rest_minutes` eklendi ama `core/db/types.ts` hiç yeniden
+# üretilmedi — bayat tipler subtree ile hem web'e hem mobile indi, drift
+# check yeşil kaldı çünkü üç kopya tutarlı biçimde yanlıştı. Bu workflow o
+# kör noktayı kapatır: canlı Supabase şemasına karşı `supabase gen types`
+# çalıştırıp commit'lenmiş core/db/types.ts ile birebir karşılaştırır.
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["core/db/types.ts"]
+
+jobs:
+  types-freshness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Supabase CLI kur
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Canlı şemadan tip üret
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          supabase gen types typescript --project-id efuqpiaavrzimvstpdpm > /tmp/live-types.ts
+
+      - name: Tazelik karşılaştırması
+        run: node scripts/check-types-freshness.mjs /tmp/live-types.ts

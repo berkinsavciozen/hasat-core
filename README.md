@@ -136,6 +136,20 @@ doğrular, iki adımda:
 | Secret | Ne için |
 |---|---|
 | `SYNC_TOKEN` | Her iki hedef reposuna da branch push'u + PR açma yetkisi olan bir PAT (`repo` kapsamı). **Kapsamına `hasat-mobile` M5-a'da Berkin tarafından eklendi** (bkz. `hasat-vault/TODO.md` build log) — iki workflow da artık her iki hedefte de çalışabilir durumda. |
+| `SUPABASE_ACCESS_TOKEN` | **M5-a-ek'te eklendi.** `types-freshness.yml`'in `supabase gen types typescript --project-id efuqpiaavrzimvstpdpm` komutunu çalıştırabilmesi için gerekli. Berkin'in kendi Supabase hesabından: https://supabase.com/dashboard/account/tokens → "Generate new token" (salt-okunur bir kapsam yeterli, proje yönetimi gerekmiyor) → `hasat-core` reposunda Settings → Secrets and variables → Actions → New repository secret → isim tam olarak `SUPABASE_ACCESS_TOKEN`. |
+
+## Tip tazeliği (DB ↔ core) — `types-freshness.yml`
+
+`drift-check.yml`'in denetlediği "core ↔ hedef repo" tutarlılığından **ayrı**
+bir soru: "commit'lenmiş `core/db/types.ts`, canlı Supabase şemasının **şu
+anki** halini mi yansıtıyor?" Bu ikisi bağımsız — core↔hedef tutarlı olsa bile
+(drift yeşil) `core/db/types.ts`'in kendisi şemadan geride kalmış olabilir,
+çünkü bir migration sonrası kimse `supabase gen types` çalıştırmadıysa drift
+kontrolünün göreceği bir fark yoktur (kural #111, `hasat-vault/TODO.md`).
+
+`types-freshness.yml` günlük + `core/db/types.ts` her değiştiğinde çalışır:
+Supabase CLI ile canlı şemadan tip üretir, `scripts/check-types-freshness.mjs`
+ile commit'lenmiş dosyayla birebir karşılaştırır, farklıysa exit 1.
 
 ---
 

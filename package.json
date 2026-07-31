@@ -8,6 +8,7 @@
     "manifest": "node scripts/gen-manifest.mjs",
     "drift": "node scripts/check-drift.mjs",
     "drift:freshness": "node scripts/check-manifest-freshness.mjs",
+    "types:freshness": "node scripts/check-types-freshness.mjs",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
