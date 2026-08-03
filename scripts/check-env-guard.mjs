@@ -8,13 +8,15 @@
 // bu değerlerin derleme sırasında uygulama paketine gömüleceği anlamına
 // geliyor — zaten istemci tarafında görünür olacaklar.
 //
-// Bu script dosyanın İÇERİĞİNİ denetler, varlığını değil: (1) her satır
-// `EXPO_PUBLIC_` ile başlamalı — başlamayan bir değişken derlemeye
-// gömülmez ama yanlışlıkla dosyaya eklenmişse asıl sır burada sessizce
-// commit'lenmiş olabilir; (2) `EXPO_PUBLIC_` prefix'i bile olsa
-// service_role/SECRET/PRIVATE/TOKEN/PASSWORD kalıpları geçen bir isim
-// (örn. yanlışlıkla `EXPO_PUBLIC_SERVICE_KEY`) prefix kontrolünü aşıp asıl
-// bir sırrı pakete gömebilir — bu ayrıca yakalanır.
+// BEYAZ LİSTE (P23-M5-b'de kara listeden çevrildi): `.env` yalnızca aşağıdaki
+// bilinen değişken adlarını içerebilir. Önceki sürüm bir kara liste
+// kullanıyordu (`EXPO_PUBLIC_` prefix'i + service_role/SECRET/PRIVATE/TOKEN/
+// PASSWORD kalıpları reddedilir) — akıllı bir isimlendirmeyle atlatılabilirdi
+// (örn. `EXPO_PUBLIC_APIKEY` gibi kalıpta geçmeyen bir kelime seçmek). Beyaz
+// liste bunu kapatıyor: listede olmayan HER isim, kalıp taşısın taşımasın,
+// reddedilir. Sonucu: yeni bir meşru değişken eklemek artık bu dosyada
+// bilinçli bir commit'i (allowlist'e ekleme) gerektiriyor — bu commit kendi
+// başına bir inceleme noktası.
 //
 // Gerekçe: hasat-vault/Build/Shared-Architecture.md → ".env içerik bekçisi".
 //
@@ -23,7 +25,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-const SECRET_PATTERNS = [/service_role/i, /SECRET/i, /PRIVATE/i, /TOKEN/i, /PASSWORD/i];
+const ALLOWED_NAMES = new Set(["EXPO_PUBLIC_SUPABASE_URL", "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"]);
 
 function fail(msg) {
   console.error(`❌ ${msg}`);
@@ -47,29 +49,23 @@ for (const line of lines) {
   const eqIdx = line.indexOf("=");
   const name = eqIdx === -1 ? line : line.slice(0, eqIdx);
 
-  if (!name.startsWith("EXPO_PUBLIC_")) {
-    violations.push(`"${name}" — EXPO_PUBLIC_ prefix'i yok (pakete gömülmeyen bir değişken .env'de ne arıyor?)`);
-    continue;
-  }
-
-  for (const pattern of SECRET_PATTERNS) {
-    if (pattern.test(name)) {
-      violations.push(
-        `"${name}" — isimde "${pattern.source}" kalıbı var. EXPO_PUBLIC_ prefix'i bunu paketin İÇİNE gömer, sır bu yolla asla .env'ye yazılmaz.`,
-      );
-      break;
-    }
+  if (!ALLOWED_NAMES.has(name)) {
+    violations.push(
+      `"${name}" — allowlist'te değil. İzin verilen adlar: ${Array.from(ALLOWED_NAMES).join(", ")}.`,
+    );
   }
 }
 
 if (violations.length === 0) {
-  console.log(`✅ .env içerik kontrolü geçti — ${lines.length} satırın tamamı EXPO_PUBLIC_ ve sır kalıbı taşımıyor.`);
+  console.log(`✅ .env içerik kontrolü geçti — ${lines.length} satırın tamamı allowlist'te.`);
   process.exit(0);
 }
 
 console.error(`❌ .env İÇERİK BEKÇİSİ İHLAL BULDU — ${envPath}`);
 for (const v of violations) console.error(`   ${v}`);
 console.error("");
+console.error("Yeni bir meşru EXPO_PUBLIC_ değişkeni eklemek gerekiyorsa, bu script'teki");
+console.error("ALLOWED_NAMES listesine bilinçli bir commit ile eklenmeli (bkz. dosya başlığı).");
 console.error("Gerçek sırlar (service_role key, API token vb.) hiçbir zaman .env'ye yazılmaz —");
 console.error("EAS Environment Variables'a konur (bkz. hasat-vault/Build/Shared-Architecture.md).");
 process.exit(1);
