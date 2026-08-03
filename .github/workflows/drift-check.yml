@@ -18,9 +18,18 @@ name: drift check (targets)
 # hasat-mobile/.env public repoda takip ediliyor (bilinçli — silinirse/
 # gitignore'lanırsa her klonda uygulama açılamaz). İçindeki iki değer
 # (Supabase URL + anon publishable key) tasarım gereği public. Bekçi dosyanın
-# VARLIĞINI değil İÇERİĞİNİ denetler: her satır EXPO_PUBLIC_ ile başlamalı,
-# ayrıca service_role/SECRET/PRIVATE/TOKEN/PASSWORD kalıpları geçen bir isim
-# (prefix'i EXPO_PUBLIC_ olsa bile — örn. EXPO_PUBLIC_SERVICE_KEY) reddedilir.
+# VARLIĞINI değil İÇERİĞİNİ denetler — BEYAZ LİSTE (M5-b'de kara listeden
+# çevrildi, bkz. scripts/check-env-guard.mjs): yalnızca bilinen iki değişken
+# adına izin var, listede olmayan HER isim (kalıp taşısın taşımasın) reddedilir.
+#
+# BU KONTROL AYRICA hasat-mobile'ın KENDİ reposunda `push` üzerinde çalışan
+# ayrı bir workflow olarak da var (`hasat-mobile/.github/workflows/env-guard.yml`,
+# bu script'i salt-okunur checkout ile çağırıyor) — buradaki günlük+push
+# kontrolü SADECE hasat-core'a dokunulduğunda tetikleniyor, hasat-mobile'a
+# doğrudan push (örn. .env elle düzenlenirse) bunu hiç görmüyordu, sır sızması
+# 24 saate kadar (bir sonraki 06:00 cron'a kadar) fark edilmiyordu. Buradaki
+# günlük kontrol artık YEDEK katman; birincil savunma hasat-mobile'daki push
+# workflow'u.
 
 on:
   schedule:
