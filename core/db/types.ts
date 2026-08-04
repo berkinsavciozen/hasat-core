@@ -4,7 +4,8 @@
 // Yeniden üretmek için:
 //   supabase gen types typescript --project-id efuqpiaavrzimvstpdpm > core/db/types.ts
 // ve üretim sonrası bu başlığı tekrar ekle.
-// Son üretim: 2026-08-03 (P23-M6 — device_tokens.updated_at + rpc_register_device_token eklendi)
+// Son üretim: 2026-08-04 (P23-M6-ek — recipe_ingredients.ingredient_class,
+// crop_requests.ingredient_class, fn_match_culinary_crop eklendi)
 
 export type Json =
   | string
@@ -440,6 +441,7 @@ export type Database = {
           created_at: string
           crop_name_free_text: string
           id: string
+          ingredient_class: string | null
           note: string | null
           quantity: number | null
           region: string | null
@@ -454,6 +456,7 @@ export type Database = {
           created_at?: string
           crop_name_free_text: string
           id?: string
+          ingredient_class?: string | null
           note?: string | null
           quantity?: number | null
           region?: string | null
@@ -468,6 +471,7 @@ export type Database = {
           created_at?: string
           crop_name_free_text?: string
           id?: string
+          ingredient_class?: string | null
           note?: string | null
           quantity?: number | null
           region?: string | null
@@ -2020,6 +2024,7 @@ export type Database = {
           crop: string | null
           free_text_name: string | null
           id: string
+          ingredient_class: string | null
           is_key_ingredient: boolean
           note: string | null
           quantity: number | null
@@ -2032,6 +2037,7 @@ export type Database = {
           crop?: string | null
           free_text_name?: string | null
           id?: string
+          ingredient_class?: string | null
           is_key_ingredient?: boolean
           note?: string | null
           quantity?: number | null
@@ -2044,6 +2050,7 @@ export type Database = {
           crop?: string | null
           free_text_name?: string | null
           id?: string
+          ingredient_class?: string | null
           is_key_ingredient?: boolean
           note?: string | null
           quantity?: number | null
@@ -3025,6 +3032,7 @@ export type Database = {
         Args: { p_crop: string; p_quantity: number; p_unit: string }
         Returns: number
       }
+      fn_match_culinary_crop: { Args: { p_text: string }; Returns: string }
       get_buyer_rating_summary: {
         Args: { _buyer_id: string }
         Returns: {
